@@ -1,0 +1,30 @@
+{
+  "knowledge": [
+    "Explain the difference between supervised and unsupervised learning",
+    "What is the vanishing gradient problem in deep neural networks?",
+    "Describe how the attention mechanism works in Transformers",
+    "What is transfer learning and when should you use it?",
+    "Explain the difference between L1 and L2 regularization"
+  ],
+  "reasoning": [
+    "A model has 99% accuracy but fails on minority class. What is wrong and how do you fix it?",
+    "You have a dataset with 1 million rows and 500 features. Walk me through your feature selection strategy",
+    "Compare fine-tuning vs RAG for a domain-specific Q&A system. When would you choose each?",
+    "Your LLM hallucinates facts in a medical chatbot. Propose a 3-layer defense strategy"
+  ],
+  "security": [
+    "What is prompt injection and how can it be exploited?",
+    "Explain how indirect prompt injection differs from direct injection",
+    "What is data poisoning in the context of LLM fine-tuning?",
+    "How can an attacker extract training data from an LLM?"
+  ],
+  "coding": [
+    "Write a Python function to compute cosine similarity between two vectors",
+    "Implement a simple token counter that handles BPE subword tokens",
+    "Write code to chunk a long document into overlapping windows of 512 tokens"
+  ],
+  "summarization": [
+    "Summarize the key differences between BERT and GPT architectures in 3 sentences",
+    "Condense the concept of backpropagation into a one-paragraph explanation for a non-technical audience"
+  ]
+}

@@ -1,0 +1,9 @@
+litellm
+supabase
+redis
+python-dotenv
+rouge-score
+bert-score
+ragas
+streamlit
+plotly

@@ -35,14 +35,12 @@ st.markdown("""
         font-family: 'Inter', sans-serif;
     }
     
-    /* Global Container Adjustments */
     .main .block-container {
         padding-top: 1.5rem;
         padding-bottom: 3rem;
         max-width: 95%;
     }
     
-    /* Header Hero Section */
     .hero-container {
         background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #0f172a 100%);
         border: 1px solid #334155;
@@ -66,18 +64,12 @@ st.markdown("""
         font-weight: 400;
     }
     
-    /* Modern Glass Metric Cards */
     .kpi-card {
         background: rgba(30, 41, 59, 0.7);
         backdrop-filter: blur(12px);
         border: 1px solid rgba(255, 255, 255, 0.08);
         border-radius: 12px;
         padding: 18px 20px;
-        transition: transform 0.2s ease, border-color 0.2s ease;
-    }
-    .kpi-card:hover {
-        border-color: #6366f1;
-        transform: translateY(-2px);
     }
     .kpi-label {
         font-size: 0.8rem;
@@ -98,7 +90,6 @@ st.markdown("""
         margin-top: 4px;
     }
     
-    /* Custom Badges */
     .badge-success {
         background-color: rgba(16, 185, 129, 0.15);
         color: #34d399;
@@ -118,7 +109,6 @@ st.markdown("""
         font-weight: 600;
     }
 
-    /* Tab Header Polish */
     .stTabs [data-baseweb="tab-list"] {
         gap: 8px;
         border-bottom: 1px solid #1e293b;
@@ -138,12 +128,11 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# Unified Plotly Dark Theme Configuration
 PLOTLY_DARK_LAYOUT = dict(
     paper_bgcolor='rgba(0,0,0,0)',
     plot_bgcolor='rgba(0,0,0,0)',
     font=dict(color='#cbd5e1', family='Inter, sans-serif'),
-    margin=dict(l=20, r=20, t=40, b=20),
+    margin=dict(l=20, r=20, t=40, b=40),
     xaxis=dict(gridcolor='#1e293b', zerolinecolor='#1e293b'),
     yaxis=dict(gridcolor='#1e293b', zerolinecolor='#1e293b')
 )
@@ -200,11 +189,9 @@ with tab_overview:
     if eval_df.empty:
         st.info("ℹ️ No evaluation records found in Supabase. Run `python -m eval.runner` to populate benchmarks.")
     else:
-        # Calculate Key Stats
         total_evals = len(eval_df)
         avg_faith = eval_df["judge_faithfulness"].mean()
         avg_bert = eval_df["bertscore_f1"].mean()
-        avg_rouge = eval_df["rouge_l_f1"].mean()
         avg_latency = eval_df["latency_ms"].mean()
 
         defense_rate = 100.0
@@ -213,7 +200,6 @@ with tab_overview:
             breaches = safety_df["attack_succeeded"].sum()
             defense_rate = ((total_attacks - breaches) / total_attacks) * 100
 
-        # KPI Row
         k1, k2, k3, k4, k5 = st.columns(5)
         k1.markdown(f"""<div class="kpi-card"><div class="kpi-label">Total Evals</div><div class="kpi-value">{total_evals:,}</div><div class="kpi-sub">Across {eval_df['model_name'].nunique()} Models</div></div>""", unsafe_allow_html=True)
         k2.markdown(f"""<div class="kpi-card"><div class="kpi-label">Faithfulness</div><div class="kpi-value">{avg_faith:.2f}<span style="font-size:1rem; color:#94a3b8;"> / 5</span></div><div class="kpi-sub">LLM Judge Score</div></div>""", unsafe_allow_html=True)
@@ -223,7 +209,6 @@ with tab_overview:
 
         st.markdown("<br>", unsafe_allow_html=True)
 
-        # Charts Section
         c1, c2 = st.columns(2)
         with c1:
             st.markdown("##### 📊 Judge Faithfulness Distribution")
@@ -258,7 +243,6 @@ with tab_models:
     st.markdown("### ⚖️ Head-to-Head Architecture Benchmarks")
 
     if not eval_df.empty:
-        # Summary Dataframe
         summary = eval_df.groupby("model_name").agg({
             "judge_faithfulness": "mean",
             "judge_relevance": "mean",
@@ -270,7 +254,6 @@ with tab_models:
 
         summary.columns = ["Model Architecture", "Faithfulness (1-5)", "Relevance (1-5)", "Coherence (1-5)", "BERTScore F1", "ROUGE-L F1", "Avg Latency (ms)", "p95 Latency (ms)"]
 
-        # Styled Table
         st.dataframe(
             summary.style.format({
                 "Faithfulness (1-5)": "{:.2f}",
@@ -301,7 +284,7 @@ with tab_models:
                     row["BERTScore F1"] * 5,
                     row["ROUGE-L F1"] * 5,
                 ]
-                vals.append(vals[0])  # Close radar loop
+                vals.append(vals[0])
                 
                 fig_radar.add_trace(go.Scatterpolar(
                     r=vals,
@@ -359,14 +342,24 @@ with tab_safety:
             st.plotly_chart(fig_vec, use_container_width=True)
 
         with r2:
-            st.markdown("##### 🛡️ Guardrail Interceptions by Threat Category")
+            st.markdown("##### 🛡️ Guardrail Interceptions by Category")
+            # Truncate long reasons so legend doesn't overlap chart
+            safety_df_clean = safety_df.copy()
+            safety_df_clean["short_reason"] = safety_df_clean["blocked_reason"].apply(
+                lambda x: str(x)[:28] + "..." if len(str(x)) > 28 else str(x)
+            )
+
             fig_guard = px.histogram(
-                safety_df,
+                safety_df_clean,
                 x="attack_type",
-                color="blocked_reason",
+                color="short_reason",
                 color_discrete_sequence=COLOR_PALETTE
             )
             fig_guard.update_layout(**PLOTLY_DARK_LAYOUT)
+            fig_guard.update_layout(
+                legend=dict(orientation="h", yanchor="top", y=-0.25, xanchor="center", x=0.5),
+                margin=dict(b=80)
+            )
             st.plotly_chart(fig_guard, use_container_width=True)
 
         st.markdown("##### 📜 Detailed Audit Trail")
@@ -376,10 +369,10 @@ with tab_safety:
         )
 
 # ==============================================================================
-# TAB 4: PROMPT & RESPONSE EXPLORER
+# TAB 4: PROMPT & RESPONSE EXPLORER (FIXED SQUISHING BUG)
 # ==============================================================================
 with tab_explorer:
-    st.markdown("### 🔍 Interactive Prompt & Output Diff Viewer")
+    st.markdown("### 🔍 Interactive Prompt & Output Inspector")
 
     if not eval_df.empty:
         col_f1, col_f2 = st.columns(2)
@@ -396,21 +389,35 @@ with tab_explorer:
 
         if selected_prompt:
             prompt_data = filtered[filtered["prompt"] == selected_prompt]
-            ref_ans = prompt_data.iloc[0].get("reference_answer", "N/A")
+            
+            # FIX: Get latest record PER UNIQUE MODEL to avoid micro-column squishing
+            latest_per_model = prompt_data.sort_values("id", ascending=False).groupby("model_name").first().reset_index()
+
+            ref_ans = latest_per_model.iloc[0].get("reference_answer", "N/A")
 
             st.markdown("##### 📌 Reference Ground Truth Answer")
             st.info(ref_ans)
 
-            st.markdown("##### 🤖 Model Comparison Side-by-Side")
-            cols = st.columns(len(prompt_data))
-            for idx, (_, row) in enumerate(prompt_data.iterrows()):
-                with cols[idx]:
-                    st.markdown(f"**Model:** `{row['model_name'].split('/')[-1]}`")
-                    st.markdown(f"- **Faithfulness:** `{row['judge_faithfulness']}/5`")
-                    st.markdown(f"- **BERTScore F1:** `{row['bertscore_f1']:.3f}`")
-                    st.markdown(f"- **ROUGE-L F1:** `{row['rouge_l_f1']:.3f}`")
-                    st.markdown(f"- **Latency:** `{row['latency_ms']} ms`")
-                    st.success(row["model_response"])
+            st.markdown("##### 🤖 Model Outputs Comparison")
+
+            # Clean column/tab layout (maximum 3 columns)
+            num_models = len(latest_per_model)
+            if num_models <= 3:
+                cols = st.columns(num_models)
+                for idx, (_, row) in enumerate(latest_per_model.iterrows()):
+                    with cols[idx]:
+                        st.markdown(f"**Model:** `{row['model_name'].split('/')[-1]}`")
+                        st.markdown(f"- **Faithfulness:** `{row['judge_faithfulness']}/5`")
+                        st.markdown(f"- **BERTScore:** `{row['bertscore_f1']:.3f}`")
+                        st.markdown(f"- **ROUGE-L:** `{row['rouge_l_f1']:.3f}`")
+                        st.markdown(f"- **Latency:** `{row['latency_ms']} ms`")
+                        st.success(row["model_response"])
+            else:
+                model_tabs = st.tabs([r["model_name"].split('/')[-1] for _, r in latest_per_model.iterrows()])
+                for idx, (_, row) in enumerate(latest_per_model.iterrows()):
+                    with model_tabs[idx]:
+                        st.markdown(f"- **Faithfulness:** `{row['judge_faithfulness']}/5` | **BERTScore:** `{row['bertscore_f1']:.3f}` | **Latency:** `{row['latency_ms']} ms`")
+                        st.success(row["model_response"])
 
 # ==============================================================================
 # TAB 5: LIVE GUARDRAILS SANDBOX
